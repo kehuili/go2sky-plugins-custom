@@ -13,7 +13,7 @@ import (
 
 const componentIDGOGrpcServer = 5003
 
-func GrpcMiddleware(logger *utclogger.Logger, tracer *go2sky.Tracer) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func GrpcServerMiddleware(logger *utclogger.Logger, tracer *go2sky.Tracer) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		span, traceCtx, err := tracer.CreateEntrySpan(ctx, info.FullMethod, func() (string, error) {
 			md, ok := metadata.FromIncomingContext(ctx)
