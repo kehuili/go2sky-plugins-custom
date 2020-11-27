@@ -1,4 +1,4 @@
-module gitlab.uisee.ai/cloud/sdk/go2sky-grpc-plugin
+module gitlab.uisee.ai/cloud/sdk/go2sky-grpc-plugin/gRPC
 
 go 1.14
 

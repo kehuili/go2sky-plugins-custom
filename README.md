@@ -17,6 +17,8 @@ import (
 	grpcPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-grpc-plugin"
 	"github.com/SkyAPM/go2sky/reporter"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -40,7 +42,12 @@ func main() {
   
 	// Use grpc client middleware with tracing
   conn, _ := grpc.Dial("dest", grpc.WithInsecure(), grpc.WithUnaryInterceptor(GrpcClientMiddleware(tracer, "localhost")))
-  
+
   // do something
+
+  // gorm plugin
+  db, _ = gorm.Open(mysql.Open(dbDsn), &gorm.Config{})
+  gormPlugin.RegisterAll(db, tracer, dbDsn, gormPlugin.GormCallback)
+  db.WithContext(ctx).Create()
 }
 ```
