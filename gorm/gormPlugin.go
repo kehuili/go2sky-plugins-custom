@@ -13,7 +13,11 @@ const componentMySQL = 5
 func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
 	return func(db *gorm.DB) {
 		sql := fmt.Sprintf("%s, %v", db.Statement.SQL.String(), db.Statement.Vars)
-		span, _ := tracer.CreateExitSpan(db.Statement.Context, db.Statement.Table, dbDsn, func(header string) error {
+		tableName := db.Statement.Table
+		if tableName == "" {
+			tableName = "undefined"
+		}
+		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbDsn, func(header string) error {
 			return nil
 		})
 		span.SetComponent(5)
