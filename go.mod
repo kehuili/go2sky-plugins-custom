@@ -6,6 +6,7 @@ replace gitlab.uisee.ai/cloud/sdk/utclogger => gitlab.uisee.ai/cloud/sdk/utclogg
 
 require (
 	github.com/SkyAPM/go2sky v0.5.0
+	github.com/eclipse/paho.mqtt.golang v1.3.1 // indirect
 	gitlab.uisee.ai/cloud/sdk/utclogger v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.33.2
 	gorm.io/gorm v1.20.7

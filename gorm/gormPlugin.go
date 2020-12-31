@@ -20,7 +20,7 @@ func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
 		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbDsn, func(header string) error {
 			return nil
 		})
-		span.SetComponent(5)
+		span.SetComponent(componentMySQL)
 		span.SetSpanLayer(agent.SpanLayer_Database)
 		span.Tag(go2sky.TagDBStatement, sql)
 		defer span.End()
