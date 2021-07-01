@@ -35,13 +35,14 @@ func Middleware(engine *gin.Engine, tracer *go2sky.Tracer) gin.HandlerFunc {
 			// 	return "", nil
 			// }
 			body, _ := ioutil.ReadAll(c.Request.Body)
+			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 			rs := make(map[string]interface{}, 0)
 			if err := json.Unmarshal(body, &rs); err != nil {
 				return "", nil
 			}
-			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-			fmt.Println(rs)
-			sw = rs["swHeaders"].(map[string]interface{})[key].(string)
+			if rs["swHeaders"] != nil && rs["swHeaders"].(map[string]interface{})[key] != nil {
+				sw = rs["swHeaders"].(map[string]interface{})[key].(string)
+			}
 			return sw, nil
 		})
 		if err != nil {
