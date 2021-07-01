@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/SkyAPM/go2sky"
-	agent "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"gorm.io/gorm"
+	agentv3 "skywalking.apache.org/repo/goapi/collect/language/agent/v3"
 )
 
 const componentMySQL = 5
@@ -17,11 +17,11 @@ func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
 		if tableName == "" {
 			tableName = "undefined"
 		}
-		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbDsn, func(header string) error {
+		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbDsn, func(key, value string) error {
 			return nil
 		})
 		span.SetComponent(componentMySQL)
-		span.SetSpanLayer(agent.SpanLayer_Database)
+		span.SetSpanLayer(agentv3.SpanLayer_Database)
 		span.Tag(go2sky.TagDBStatement, sql)
 		defer span.End()
 	}

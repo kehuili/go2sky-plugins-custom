@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/SkyAPM/go2sky"
-	"github.com/SkyAPM/go2sky/propagation"
-	agent "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	agentv3 "skywalking.apache.org/repo/goapi/collect/language/agent/v3"
 )
 
-const componentIDGOGrpcClient = 5002
+const componentIDGOGrpcClient = 23
 
 func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 	ctx context.Context,
@@ -23,13 +22,13 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// Logic before invoking the invoker
 		var traceCtx context.Context
-		span, err := tracer.CreateExitSpan(ctx, method, host, func(header string) error {
-			traceCtx = metadata.AppendToOutgoingContext(ctx, propagation.Header, header)
+		span, err := tracer.CreateExitSpan(ctx, method, host, func(key, value string) error {
+			traceCtx = metadata.AppendToOutgoingContext(ctx, key, value)
 			return nil
 		})
 		span.SetComponent(componentIDGOGrpcClient)
 		span.Tag(go2sky.TagURL, method)
-		span.SetSpanLayer(agent.SpanLayer_RPCFramework)
+		span.SetSpanLayer(agentv3.SpanLayer_RPCFramework)
 		defer span.End()
 		// Calls the invoker to execute RPC
 		err = invoker(traceCtx, method, req, reply, cc, opts...)
