@@ -14,7 +14,10 @@ import (
 	"log"
 
 	"github.com/SkyAPM/go2sky"
-	grpcPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-grpc-plugin"
+	mqttPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/paho"
+	gRPCPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gRPC"
+	gormPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gorm"
+	ginPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gin"
 	"github.com/SkyAPM/go2sky/reporter"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -26,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("new reporter error %v \n", err)
 	}
-	defer re.Close()
+	defer rp.Close()
 
 	tracer, err := go2sky.NewTracer("grpc-server", go2sky.WithReporter(re))
 	if err != nil {
@@ -37,17 +40,28 @@ func main() {
 
 	// Use grpc server middleware with tracing
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcPlugin.GrpcServerMiddleware(logger, tracer)))
-
-  // do something
   
 	// Use grpc client middleware with tracing
-  conn, _ := grpc.Dial("dest", grpc.WithInsecure(), grpc.WithUnaryInterceptor(GrpcClientMiddleware(tracer, "localhost")))
-
-  // do something
+  conn, _ := grpc.Dial("dest", grpc.WithInsecure(), grpc.WithUnaryInterceptor(grpcPlugin.GrpcClientMiddleware(tracer, "localhost")))
 
   // gorm plugin
   db, _ = gorm.Open(mysql.Open(dbDsn), &gorm.Config{})
   gormPlugin.RegisterAll(db, tracer, dbDsn, gormPlugin.GormCallback)
   db.WithContext(ctx).Create()
+
+  // mqtt publish
+	text := fmt.Sprintf(`{"a": "Message hello"}`)
+	msg, err := mqttPlugin.BeforePublish(tracer, "test", topic, text, ctx)
+	client.Publish(topic, 0, false, msg)
+
+  // mqtt receive
+  ctx := context.Background()
+	var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+		ctx,err = mqttPlugin.AfterOnMessage(tracer, topic, msg.Payload(), ctx)
+	}
+
+  //gin
+	router := gin.New()
+	router.Use(ginPlugin.Middleware(router, tracer))
 }
 ```

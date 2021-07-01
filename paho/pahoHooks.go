@@ -14,7 +14,7 @@ import (
 const componentIDGOOPahoProducer = 52
 const componentIDGOOPahoConsumer = 53
 
-func BeforePublish(tracer *go2sky.Tracer, servers string, ctx context.Context, topic string, payload interface{}) (error, interface{}) {
+func BeforePublish(tracer *go2sky.Tracer, servers string, topic string, payload interface{}, ctx context.Context) (interface{}, error) {
 	operationName := fmt.Sprintf("EMQX/Topic/%s/Produce", topic)
 	rs := make(map[string]interface{})
 	span, err := tracer.CreateExitSpan(ctx, operationName, servers, func(key, value string) error {
@@ -53,7 +53,7 @@ func BeforePublish(tracer *go2sky.Tracer, servers string, ctx context.Context, t
 	})
 	b, err := json.Marshal(rs)
 	if err != nil {
-		return err, payload
+		return payload, err
 	}
 
 	span.SetComponent(componentIDGOOPahoProducer)
@@ -62,14 +62,10 @@ func BeforePublish(tracer *go2sky.Tracer, servers string, ctx context.Context, t
 	span.SetSpanLayer(agentv3.SpanLayer_MQ)
 	defer span.End()
 
-	if err != nil {
-		return err, payload
-	}
-
-	return nil, b
+	return b, err
 }
 
-func AfterOnMessage(tracer *go2sky.Tracer, ctx context.Context, topic string, payload []byte) (error, context.Context) {
+func AfterOnMessage(tracer *go2sky.Tracer, topic string, payload []byte, ctx context.Context) (context.Context, error) {
 	operationName := fmt.Sprintf("EMQX/Topic/%s/Consumer", topic)
 	span, traceCtx, err := tracer.CreateEntrySpan(ctx, operationName, func(key string) (string, error) {
 		rs := make(map[string]interface{})
@@ -89,5 +85,5 @@ func AfterOnMessage(tracer *go2sky.Tracer, ctx context.Context, topic string, pa
 	span.SetSpanLayer(agentv3.SpanLayer_MQ)
 	defer span.End()
 
-	return err, traceCtx
+	return traceCtx, err
 }
