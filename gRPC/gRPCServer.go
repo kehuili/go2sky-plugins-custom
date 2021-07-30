@@ -2,6 +2,7 @@ package grpcPlugin
 
 import (
 	"context"
+	"time"
 
 	"github.com/SkyAPM/go2sky"
 	"gitlab.uisee.ai/cloud/sdk/utclogger"
@@ -33,6 +34,9 @@ func GrpcServerMiddleware(logger *utclogger.Logger, tracer *go2sky.Tracer) func(
 
 		//处理请求
 		r, err := handler(traceCtx, req)
+		if err != nil {
+			span.Error(time.Now(), err.Error())
+		}
 
 		span.End()
 

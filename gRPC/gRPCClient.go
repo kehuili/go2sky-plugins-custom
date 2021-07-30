@@ -2,6 +2,7 @@ package grpcPlugin
 
 import (
 	"context"
+	"time"
 
 	"github.com/SkyAPM/go2sky"
 	"google.golang.org/grpc"
@@ -32,6 +33,9 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 		defer span.End()
 		// Calls the invoker to execute RPC
 		err = invoker(traceCtx, method, req, reply, cc, opts...)
+		if err != nil {
+			span.Error(time.Now(), err.Error())
+		}
 		return err
 	}
 }
