@@ -31,15 +31,13 @@ func main() {
 	}
 	defer rp.Close()
 
-	tracer, err := go2sky.NewTracer("grpc-server", go2sky.WithReporter(re))
+	tracer, err := go2sky.NewTracer("grpc-server", go2sky.WithReporter(rp))
 	if err != nil {
 		log.Fatalf("create tracer error %v \n", err)
 	}
 
-	logger := utclogger.New("console-xxx")
-
 	// Use grpc server middleware with tracing
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcPlugin.GrpcServerMiddleware(logger, tracer)))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcPlugin.GrpcServerMiddleware(tracer)))
   
 	// Use grpc client middleware with tracing
   conn, _ := grpc.Dial("dest", grpc.WithInsecure(), grpc.WithUnaryInterceptor(grpcPlugin.GrpcClientMiddleware(tracer, "localhost")))
