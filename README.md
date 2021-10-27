@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-go get -u gitlab.uisee.ai/cloud/sdk/go2sky-grpc-plugin
+go get -u gitlab.uisee.ai/cloud/sdk/go2sky-plugin
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ import (
 
 	"github.com/SkyAPM/go2sky"
 	mqttPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/paho"
-	gRPCPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gRPC"
+	grpcPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gRPC"
 	gormPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gorm"
 	ginPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gin"
 	"github.com/SkyAPM/go2sky/reporter"
