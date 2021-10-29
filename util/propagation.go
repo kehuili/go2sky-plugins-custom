@@ -4,14 +4,31 @@ import (
 	"context"
 	"reflect"
 	"unsafe"
+
+	"github.com/gin-gonic/gin"
 )
 
 func CopyContextValue(dest context.Context, src context.Context) context.Context {
+	res := dest
 	keys := GetContextKeys(src)
 	for _, key := range keys {
-		dest = context.WithValue(dest, key, src.Value(key))
+		res = context.WithValue(dest, key, src.Value(key))
 	}
-	return dest
+	return res
+}
+
+func CopyGinContextValue(dest context.Context, src context.Context) context.Context {
+	var newCtx context.Context
+
+	ginContextType := reflect.TypeOf((*gin.Context)(nil)).Elem()
+
+	if reflect.TypeOf(src).Elem().Implements(ginContextType) {
+		srcCtx, _ := reflect.ValueOf(src).Interface().(*gin.Context)
+		newCtx = CopyContextValue(dest, srcCtx.Request.Context())
+	} else {
+		newCtx = dest
+	}
+	return newCtx
 }
 
 func GetContextKeys(ctx context.Context) []interface{} {
