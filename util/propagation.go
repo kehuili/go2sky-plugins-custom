@@ -20,11 +20,11 @@ func CopyContextValue(dest context.Context, src context.Context) context.Context
 func CopyGinContextValue(dest context.Context, src context.Context) context.Context {
 	var newCtx context.Context
 
-	ginContextType := reflect.TypeOf((*gin.Context)(nil)).Elem()
+	// ginContextType := reflect.TypeOf((*gin.Context)(nil)).Elem()
 
-	if reflect.TypeOf(src).Elem().Implements(ginContextType) {
-		srcCtx, _ := reflect.ValueOf(src).Interface().(*gin.Context)
-		newCtx = CopyContextValue(dest, srcCtx.Request.Context())
+	if srcGin, ok := src.(*gin.Context); ok {
+		// srcCtx, _ := reflect.ValueOf(src).Interface().(*gin.Context)
+		newCtx = CopyContextValue(dest, srcGin.Request.Context())
 	} else {
 		newCtx = dest
 	}
