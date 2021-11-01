@@ -22,9 +22,9 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 	opts ...grpc.CallOption) (err error) {
 	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// Logic before invoking the invoker
-		var traceCtx context.Context
+		traceCtx := ctx
 		span, err := tracer.CreateExitSpan(ctx, method, host, func(key, value string) error {
-			traceCtx = metadata.AppendToOutgoingContext(ctx, key, value)
+			traceCtx = metadata.AppendToOutgoingContext(traceCtx, key, value)
 			return nil
 		})
 		span.SetComponent(componentIDGOGrpcClient)
