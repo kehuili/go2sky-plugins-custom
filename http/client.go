@@ -28,6 +28,7 @@ func (e Error) Error() string {
 const (
 	errInvalidTracer            = Error("invalid tracer")
 	TagPayload       go2sky.Tag = "payload"
+	TagResponse      go2sky.Tag = "response"
 )
 
 type ClientConfig struct {
@@ -108,6 +109,7 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	span.Tag(go2sky.TagHTTPMethod, req.Method)
 	span.Tag(go2sky.TagURL, req.URL.String())
 
+	// tag req payload
 	var bodyBytes []byte
 	if req.ContentLength > 0 {
 		contentType := req.Header.Get("Content-Type")
@@ -133,11 +135,16 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		return
 	}
 	span.Tag(go2sky.TagStatusCode, strconv.Itoa(res.StatusCode))
+
+	// tag response
+	bodyBytes, _ = ioutil.ReadAll(res.Body)
+	res.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	if res.StatusCode >= http.StatusBadRequest {
-		bodyBytes, _ = ioutil.ReadAll(res.Body)
-		res.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 		span.Error(time.Now(), "Errors on handling client", string(bodyBytes))
+	} else {
+		span.Tag(TagResponse, string(bodyBytes))
 	}
+
 	return res, nil
 }
 
