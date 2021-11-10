@@ -11,6 +11,9 @@ import (
 const componentMySQL = 5
 
 func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
+	if tracer == nil {
+		return func(db *gorm.DB) {}
+	}
 	return func(db *gorm.DB) {
 		sql := fmt.Sprintf("%s, %v", db.Statement.SQL.String(), db.Statement.Vars)
 		tableName := db.Statement.Table

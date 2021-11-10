@@ -18,6 +18,7 @@ import (
 	grpcPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gRPC"
 	gormPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gorm"
 	ginPlugin "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/gin"
+	skyUtil "gitlab.uisee.ai/cloud/sdk/go2sky-plugin/util"
 	"github.com/SkyAPM/go2sky/reporter"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -25,16 +26,11 @@ import (
 )
 
 func main() {
-  rp, err := reporter.NewGRPCReporter("skywalking-uri")
-	if err != nil {
-		log.Fatalf("new reporter error %v \n", err)
-	}
-	defer rp.Close()
-
-	tracer, err := go2sky.NewTracer("grpc-server", go2sky.WithReporter(rp))
+  rp, tracer, err := skyUtil.Reporter("skywalking-uri", "server-name")
 	if err != nil {
 		log.Fatalf("create tracer error %v \n", err)
 	}
+	defer skyUtil.Close(rp)
 
 	// Use grpc server middleware with tracing
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcPlugin.GrpcServerMiddleware(tracer)))

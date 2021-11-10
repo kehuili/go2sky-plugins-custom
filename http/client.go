@@ -67,9 +67,9 @@ func WithClient(client *http.Client) ClientOption {
 
 // NewClient returns an HTTP Client with tracer
 func NewClient(tracer *go2sky.Tracer, options ...ClientOption) (*http.Client, error) {
-	if tracer == nil {
-		return nil, errInvalidTracer
-	}
+	// if tracer == nil {
+	// 	return nil, errInvalidTracer
+	// }
 	co := &ClientConfig{tracer: tracer}
 	for _, option := range options {
 		option(co)
@@ -94,6 +94,9 @@ type transport struct {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error) {
+	if t.tracer == nil {
+		return t.delegated.RoundTrip(req)
+	}
 	span, err := t.tracer.CreateExitSpan(req.Context(), getOperationName(t.name, req), req.Host, func(key, value string) error {
 		req.Header.Set(key, value)
 		return nil

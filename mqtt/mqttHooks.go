@@ -1,4 +1,4 @@
-package pahoPlugin
+package mqttPlugin
 
 import (
 	"bytes"
@@ -16,6 +16,9 @@ const componentIDGOOPahoConsumer = 53
 const TagMQPayload = "mq.payload"
 
 func BeforePublish(tracer *go2sky.Tracer, servers string, topic string, payload interface{}, ctx context.Context) (interface{}, error) {
+	if tracer == nil {
+		return payload, nil
+	}
 	operationName := fmt.Sprintf("EMQX/Topic/%s/Produce", topic)
 	rs := make(map[string]interface{})
 	span, err := tracer.CreateExitSpan(ctx, operationName, servers, func(key, value string) error {
@@ -75,17 +78,24 @@ func BeforePublish(tracer *go2sky.Tracer, servers string, topic string, payload 
 }
 
 func AfterOnMessage(tracer *go2sky.Tracer, topic string, payload []byte, ctx context.Context) (context.Context, error) {
+	if tracer == nil {
+		return ctx, nil
+	}
 	operationName := fmt.Sprintf("EMQX/Topic/%s/Consumer", topic)
+
+	rs := make(map[string]interface{})
+	if err := json.Unmarshal(payload, &rs); err != nil {
+		return ctx, nil
+	}
 	span, traceCtx, err := tracer.CreateEntrySpan(ctx, operationName, func(key string) (string, error) {
-		rs := make(map[string]interface{})
 		var sw string
-		if err := json.Unmarshal(payload, &rs); err == nil && rs["headers"] != nil {
+		if rs["headers"] != nil {
 			headers, ok := rs["headers"].(map[string]interface{})
 			if ok {
 				sw = headers[key].(string)
 			}
 		} else {
-			return "", err
+			return "", nil
 		}
 		return sw, nil
 	})

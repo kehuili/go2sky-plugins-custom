@@ -20,6 +20,12 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 	cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption) (err error) {
+	if tracer == nil {
+		return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			err := invoker(ctx, method, req, reply, cc, opts...)
+			return err
+		}
+	}
 	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// Logic before invoking the invoker
 		traceCtx := ctx
