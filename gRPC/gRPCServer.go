@@ -31,6 +31,9 @@ func GrpcServerMiddleware(tracer *go2sky.Tracer) func(ctx context.Context, req i
 			}
 			return sw8[0], nil
 		})
+
+		ctx = traceCtx
+
 		span.SetComponent(componentIDGOGrpcServer)
 		span.Tag(go2sky.TagURL, info.FullMethod)
 		span.SetSpanLayer(agentv3.SpanLayer_RPCFramework)

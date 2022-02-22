@@ -28,9 +28,8 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 	}
 	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// Logic before invoking the invoker
-		traceCtx := ctx
 		span, err := tracer.CreateExitSpan(ctx, method, host, func(key, value string) error {
-			traceCtx = metadata.AppendToOutgoingContext(traceCtx, key, value)
+			ctx = metadata.AppendToOutgoingContext(ctx, key, value)
 			return nil
 		})
 		span.SetComponent(componentIDGOGrpcClient)
@@ -38,7 +37,7 @@ func GrpcClientMiddleware(tracer *go2sky.Tracer, host string) func(
 		span.SetSpanLayer(agentv3.SpanLayer_RPCFramework)
 		defer span.End()
 		// Calls the invoker to execute RPC
-		err = invoker(traceCtx, method, req, reply, cc, opts...)
+		err = invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
 			span.Error(time.Now(), err.Error())
 		}
