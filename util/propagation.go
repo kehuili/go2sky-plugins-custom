@@ -12,7 +12,7 @@ func CopyContextValue(dest context.Context, src context.Context) context.Context
 	res := dest
 	keys := GetContextKeys(src)
 	for _, key := range keys {
-		res = context.WithValue(dest, key, src.Value(key))
+		res = context.WithValue(res, key, src.Value(key))
 	}
 	return res
 }
