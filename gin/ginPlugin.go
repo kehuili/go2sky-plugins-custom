@@ -16,14 +16,27 @@ import (
 const componentIDGINHttpServer = 5006
 
 //Middleware gin middleware return HandlerFunc  with tracing.
-func Middleware(engine *gin.Engine, tracer *go2sky.Tracer) gin.HandlerFunc {
+func Middleware(engine *gin.Engine, tracer *go2sky.Tracer, opts ...Option) gin.HandlerFunc {
 	if engine == nil || tracer == nil {
 		return func(c *gin.Context) {
 			c.Next()
 		}
 	}
 
+	options := &options{}
+	for _, o := range opts {
+		o(options)
+	}
+
 	return func(c *gin.Context) {
+		// ignore designated paths
+		for _, path := range options.excludePaths {
+			if c.FullPath() == path {
+				c.Next()
+				return
+			}
+		}
+
 		span, ctx, err := tracer.CreateEntrySpan(c.Request.Context(), getOperationName(c), func(key string) (string, error) {
 			sw := c.Request.Header.Get(key)
 			if sw != "" {
@@ -34,14 +47,20 @@ func Middleware(engine *gin.Engine, tracer *go2sky.Tracer) gin.HandlerFunc {
 			// if err := c.ShouldBindBodyWith(&rs, binding.JSON); err != nil {
 			// 	return "", nil
 			// }
-			body, _ := ioutil.ReadAll(c.Request.Body)
-			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-			rs := make(map[string]interface{}, 0)
-			if err := json.Unmarshal(body, &rs); err != nil {
-				return "", nil
-			}
-			if rs["swHeaders"] != nil && rs["swHeaders"].(map[string]interface{})[key] != nil {
-				sw = rs["swHeaders"].(map[string]interface{})[key].(string)
+
+			for _, path := range options.fromBodyPaths {
+				if c.FullPath() == path {
+					body, _ := ioutil.ReadAll(c.Request.Body)
+					c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+					rs := make(map[string]interface{})
+					if err := json.Unmarshal(body, &rs); err != nil {
+						return "", nil
+					}
+					if rs["swHeaders"] != nil && rs["swHeaders"].(map[string]interface{})[key] != nil {
+						sw = rs["swHeaders"].(map[string]interface{})[key].(string)
+					}
+					return sw, nil
+				}
 			}
 			return sw, nil
 		})
