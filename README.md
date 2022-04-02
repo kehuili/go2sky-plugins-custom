@@ -57,5 +57,9 @@ func main() {
   //gin
 	router := gin.New()
 	router.Use(ginPlugin.Middleware(router, tracer))
+  // exclude ping
+	router.Use(ginPlugin.Middleware(router, tracer, ginPlugin.WithExcludePaths([]string{"/ping"})))
+  // for some url, read sw8 from body
+	router.Use(ginPlugin.Middleware(router, tracer, ginPlugin.WithFromBodyPaths([]string{"/notification"})))
 }
 ```
