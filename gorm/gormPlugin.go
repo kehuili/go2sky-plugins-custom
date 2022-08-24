@@ -2,6 +2,7 @@ package gormPlugin
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/SkyAPM/go2sky"
 	"gorm.io/gorm"
@@ -10,7 +11,7 @@ import (
 
 const componentMySQL = 5
 
-func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
+func GormCallback(tracer *go2sky.Tracer, dbName string) func(db *gorm.DB) {
 	if tracer == nil {
 		return func(db *gorm.DB) {}
 	}
@@ -20,7 +21,7 @@ func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
 		if tableName == "" {
 			tableName = "undefined"
 		}
-		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbDsn, func(key, value string) error {
+		span, _ := tracer.CreateExitSpan(db.Statement.Context, tableName, dbName, func(key, value string) error {
 			return nil
 		})
 		span.SetComponent(componentMySQL)
@@ -31,10 +32,18 @@ func GormCallback(tracer *go2sky.Tracer, dbDsn string) func(db *gorm.DB) {
 }
 
 func RegisterAll(db *gorm.DB, tracer *go2sky.Tracer, dbDsn string, callback func(*go2sky.Tracer, string) func(db *gorm.DB)) {
-	db.Callback().Create().Register("skywalking", callback(tracer, dbDsn))
-	db.Callback().Query().Register("skywalking", callback(tracer, dbDsn))
-	db.Callback().Update().Register("skywalking", callback(tracer, dbDsn))
-	db.Callback().Delete().Register("skywalking", callback(tracer, dbDsn))
-	db.Callback().Row().Register("skywalking", callback(tracer, dbDsn))
-	db.Callback().Raw().Register("skywalking", callback(tracer, dbDsn))
+	// get db name if it's dsn
+	dbName := dbDsn
+	prefix := strings.Split(dbDsn, "?")[0]
+	splited := strings.Split(prefix, "/")
+	if len(splited) > 1 {
+		dbName = splited[1]
+	}
+
+	db.Callback().Create().Register("skywalking", callback(tracer, dbName))
+	db.Callback().Query().Register("skywalking", callback(tracer, dbName))
+	db.Callback().Update().Register("skywalking", callback(tracer, dbName))
+	db.Callback().Delete().Register("skywalking", callback(tracer, dbName))
+	db.Callback().Row().Register("skywalking", callback(tracer, dbName))
+	db.Callback().Raw().Register("skywalking", callback(tracer, dbName))
 }
